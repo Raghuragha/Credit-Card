@@ -29,7 +29,7 @@ Tenure = st.number_input("Tenure", min_value=1)
 CreditScore = st.number_input("Credict Score", min_value=0.0)
 
 # Create a dataframe with the user input
-input_data = pd.DataFrame([[Age, AnnualIncome, SpendingScore,Tenure,CreditScore]], columns=columns)
+input_data = pd.DataFrame([[Age, AnnualIncome, SpendingScore, Tenure,CreditScore]], columns=columns)
 
 # Make a prediction
 # Make a prediction
