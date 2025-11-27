@@ -9,11 +9,10 @@ filename = r'logistic_regression_model.joblib'
 loaded_model = joblib.load(open(filename, 'rb'))
 
 # Get the features the model was trained on
-# (this will include MaritalStatus_Married, MaritalStatus_Single, etc.)
 if hasattr(loaded_model, "feature_names_in_"):
     expected_features = list(loaded_model.feature_names_in_)
 else:
-    # Fallback (only if model was trained without feature names)
+    # Fallback (edit this if your model has different features)
     expected_features = [
         'Age', 'AnnualIncome', 'SpendingScore',
         'Tenure', 'CreditScore',
@@ -40,7 +39,7 @@ MaritalStatus = st.selectbox("Marital Status", ["Single", "Married"])
 # -----------------------------
 # Build input DataFrame
 # -----------------------------
-# Step 1: Create base DataFrame with raw values
+# Step 1: raw DataFrame
 input_raw = pd.DataFrame([{
     'Age': Age,
     'AnnualIncome': AnnualIncome,
@@ -50,32 +49,63 @@ input_raw = pd.DataFrame([{
     'MaritalStatus': MaritalStatus
 }])
 
-# Step 2: One-hot encode MaritalStatus to match training
+# Step 2: one-hot encode MaritalStatus
 input_processed = pd.get_dummies(input_raw, columns=['MaritalStatus'])
 
-# Step 3: Ensure all expected model features exist; if missing, fill with 0
+# Step 3: add any missing expected columns with 0
 for col in expected_features:
     if col not in input_processed.columns:
         input_processed[col] = 0
 
-# Step 4: Reorder columns to match the model’s training order
+# Step 4: reorder columns to match model
 input_processed = input_processed[expected_features]
 
-# Show processed input (for debugging / transparency)
-st.write("### Processed Input to Model")
+# -----------------------------
+# Debug info
+# -----------------------------
+st.write("### Model expected features:")
+st.write(expected_features)
+
+st.write("### Processed Input to Model:")
 st.dataframe(input_processed)
+
+# Show coefficients if available (e.g. LogisticRegression)
+if hasattr(loaded_model, "coef_") and hasattr(loaded_model, "classes_") and hasattr(loaded_model, "feature_names_in_"):
+    try:
+        coef_df = pd.DataFrame({
+            "Feature": loaded_model.feature_names_in_,
+            "Coefficient": loaded_model.coef_[0]
+        })
+        st.write("### Model Coefficients (log-odds impact):")
+        st.dataframe(coef_df)
+    except Exception:
+        st.write("Model coefficients not available for display.")
+
+# Threshold slider
+st.write("### Decision Threshold (for probability of approval)")
+threshold = st.slider("Approval Threshold", 0.0, 1.0, 0.5, 0.01)
 
 # -----------------------------
 # Prediction
 # -----------------------------
 if st.button("Predict Eligibility"):
     try:
-        prediction = loaded_model.predict(input_processed)
+        # Probability of class 1 (Approved) if available
+        if hasattr(loaded_model, "predict_proba"):
+            proba = loaded_model.predict_proba(input_processed)[0][1]  # probability of class 1
+            st.write(f"Approval Probability (class 1): **{proba:.4f}**")
 
-        if prediction[0] == 0:
-            st.error("❌ Predicted Eligibility: Not Approved")
+            if proba >= threshold:
+                st.success("✅ Predicted Eligibility: Approved")
+            else:
+                st.error("❌ Predicted Eligibility: Not Approved")
         else:
-            st.success("✅ Predicted Eligibility: Approved")
+            # Fallback to plain predict
+            prediction = loaded_model.predict(input_processed)
+            if prediction[0] == 1:
+                st.success("✅ Predicted Eligibility: Approved")
+            else:
+                st.error("❌ Predicted Eligibility: Not Approved")
 
     except Exception as e:
         st.error(f"Error during prediction: {e}")
