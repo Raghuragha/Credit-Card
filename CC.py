@@ -7,7 +7,7 @@ filename = r'logistic_regression_model.joblib'
 loaded_model = joblib.load(open(filename, 'rb'))
 
 # Define the correct column names
-columns = ['Age', 'AnnualIncome', 'SpendingScore','Tenure','MaritalStatus', 'CreditScore'],
+columns = ['Age', 'AnnualIncome', 'SpendingScore','Tenure', 'CreditScore'],
 
 # Define the prediction function
 def predict_Eligibility(features):
@@ -23,7 +23,6 @@ st.title("Credict card Eligibility Prediction")
 # Get user input
 st.write("Please provide the following information:")
 Age = st.number_input("Age(18+)", min_value=0.0)
-MaritalStatus = st.boolean_input("Marital Status")
 AnnualIncome = st.number_input("Annual Income", min_value=0.0)
 SpendingScore = st.number_input("Spending Score (1-100)", min_value=0.0)
 Tenure = st.number_input("Tenure", min_value=1)
